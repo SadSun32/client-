@@ -5,31 +5,29 @@
 #include <vector>
 #include "console.h"
 
-using namespace std;
-struct VectData{
-    uint64_t VecSize;///<размер вектора
-    vector<uint64_t> *vec;///<вектор со значениями
-};
-
+/// @brief Ха-ха, вот это doxygen
 class Filer
 {
-private:
-    ifstream orFileName;///<Читаем исходный файл
-    ifstream authFileName;//<Читаем файл с авторизационными данными
-    ofstream resFileName;///<запись в конечный файл
-    uint64_t amount;///<количество векторов
-    vector<VectData>all_data;///<вектор с данными из структуры
-    string login;///< Логин для авторизации
-   	string pswd;///< Пароль для авторизации
-    
 public:
-    Filer()=delete;///<запрет конструктора без параметров
-    Filer(const console & a);
-    ~Filer();///<дecтруктор
-    void Write(uint64_t piece){resFileName<<' '<<piece; }///<Запись результатов в файл
-    uint64_t getVectorSize(unsigned int numVec){return all_data[numVec].VecSize;}///<Размер одного вектора
-    uint64_t* getVector(unsigned int numVec){return all_data[numVec].vec->data();}///<Номер вектора
-    uint64_t getAmount(){return amount;}///<Логин для авторизации
-    string getLogin()const {return login;}///<Колличество векторов
-    string getPswd()const {return pswd;}///<Пароль для авторизации
+    Filer(const Console & a);
+    ~Filer();
+    void Write(uint64_t piece){ resFileName << ' ' << piece; }///<Запись результатов в файл
+    size_t getVectorSize(size_t numVec)///<Размер numVec вектора
+    {
+        if(numVec < all_data.size()) 
+            return all_data[numVec].size();
+    }
+    
+    std::vector<uint64_t>& getVector(size_t numVec){ return all_data[numVec]; }///<Номер вектора
+    uint64_t getAmount() { return amount; }///<Логин для авторизации
+    const std::string& getLogin() const {return login;}///<Колличество векторов
+    const std::string& getPswd() const {return pswd;}///<Пароль для авторизации
+
+private:
+    /// @brief Результирующий файл
+    std::ofstream resFileName;
+    uint64_t amount;///<количество векторов
+    std::vector<std::vector<uint64_t>> all_data;///<вектор с данными из структуры
+    std::string login;///< Логин для авторизации
+   	std::string pswd;///< Пароль для авторизации
 };

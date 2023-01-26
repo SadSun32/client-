@@ -3,79 +3,107 @@
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
 using namespace CryptoPP;
 
-Web::Web(const console & a,const Filer& op):caddr(new sockaddr_in),saddr(new sockaddr_in) {
+Web::Web(const Console & a, const Filer& op): caddr(new sockaddr_in),
+                                              saddr(new sockaddr_in)
+{
    	caddr->sin_port = htons(a.getPort());
     caddr->sin_addr.s_addr = inet_addr(a.getIP().c_str());
     
+    /// Надо бы заполнить
     saddr->sin_family = AF_INET;
    	saddr->sin_port = 0;
-    saddr->sin_addr.s_addr =0;
+    saddr->sin_addr.s_addr = 0;
     
-    Socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (Socket == -1) {
-        cerr << "Error open socket\n";
-        close(Socket);
+    socket_ = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_ == -1) 
+    {
+        std::cerr << "Error open socket\n";
+        close(socket_);
         exit(1);
     }
+
+    int value = 1;
+    setsockopt(socket_, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(int));
     
-    login=op.getLogin();
-    pswd=op.getPswd();
+    login = op.getLogin();
+    pswd  = op.getPswd();
 }
 
-void Web::Install(){
-    int rc = bind(Socket, (const sockaddr *) saddr, sizeof (sockaddr_in));
-    if (rc == -1) {
-        cerr <<"Error bind socket with local address\n";
-        close(Socket);
+/// После заполнения saddr
+void Web::Install()
+{
+    int rc = bind(socket_, (const sockaddr *) saddr, sizeof (sockaddr_in));
+    if (rc == -1) 
+    {
+        cerr << "Error bind socket with local address\n";
+        close(socket_);
         exit(1);
     }
 
-    rc = connect(Socket, (const sockaddr*) caddr, sizeof(sockaddr_in));
-    if (rc == -1) {
-        cerr <<"Error connect socket with server\n";
-        close(Socket);
+    rc = connect(socket_, (const sockaddr*) caddr, sizeof(sockaddr_in));
+    if (rc == -1) 
+    {
+        cerr << "Error connect socket with server\n";
+        close(socket_);
         exit(1);
     }
 }
 
-void Web::Auth() {
-    char *buf = new char[2048];
-    msg = login.copy(buf,login.length()); // копируем строку c login
-    send(Socket, buf, login.length(), 0);//отправляем login
+void Web::Auth() 
+{
+    const size_t BUFSIZE = 2048;  
 
-    recv(Socket, buf, sizeof(buf), 0);//получаем ответ
-    if (string(buf) == "ERR") {
-        cerr <<"Not found login\n";
-        close(Socket);
+    send(socket_, login.c_str(), login.length(), 0);//отправляем login
+    
+    std::string msg;///< Сообщение для отправки данных
+    msg.reserve(BUFSIZE);
+    recv(socket_, msg.c_str(), msg.length(), 0);//получаем ответ
+    if (msg == "ERR")
+    {
+        cerr << "Not found login\n";
+        close(socket_);
         exit(1);
     }
-	msg=string(buf)+pswd;
+
+	msg += pswd;
+
+    std::string Hash;///< Зашифрованный пароль
     Weak::MD5 hash;
-    StringSource(msg, true,new HashFilter(hash,new HexEncoder(new StringSink (Hash))));
-    msg = Hash.copy(buf,Hash.length()); // копируем строку c hash
-    send(Socket, buf, Hash.length(), 0); // отправляем  hash
-    if (string(buf)== "ERR") {
-        cerr <<"Error of auth\n";
-        close(Socket);
+
+    StringSource(msg, true, new HashFilter(hash, new HexEncoder(new StringSink (Hash))));
+
+    int rc = send(socket_, Hash.c_str(), Hash.length(), 0); // отправляем  Hash
+
+    if (rc == -1) 
+    {
+        std::cerr << "Error send message\n";
+        close(socket_);
         exit(1);
     }
-   delete[] buf;  
+
+    delete[] buf;  
 }
 
-void Web::Sending(int Socket,char* buf, size_t size) {
+/// и где это будет использовано? 
+void Web::Sending(int Socket, char* buf, size_t size) 
+{
     int rc = send(Socket, (const void*) &buf, sizeof(buf), 0);
-    if (rc == -1) {
-        cerr <<"Error send message\n";
+    if (rc == -1) 
+    {
+        std::cerr << "Error send message\n";
         close(Socket);
         exit(1);
     }
 }
 
-int Web::Receiving(int Socket) {
-uint64_t piece;
+/// и где это? 
+int Web::Receiving(int Socket)
+{
+    uint64_t piece;
     int rc = recv(Socket,(void*) &piece, sizeof(piece), 0);
-    if (rc == -1) {
-        cerr <<"Error receive answer\n";
+    if (rc == -1) 
+    {
+        std::cerr <<"Error receive answer\n";
         close(Socket);
         exit(1);
     }
@@ -83,7 +111,8 @@ uint64_t piece;
     return piece;
 }
 
-Web::~Web() {// Деструктор 
+Web::~Web()
+{
 	delete caddr;
 	delete saddr;
-    }
+}

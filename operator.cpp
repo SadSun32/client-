@@ -1,41 +1,57 @@
 #include "operator.h"
 using namespace std;
 
-Filer::Filer(const console & a):orFileName(), authFileName(), resFileName(), amount(0), all_data(), login(), pswd() { // открыть файлы
+Filer::Filer(const Console & a):resFileName(), amount(0),
+                                all_data(), login(), pswd() 
+{ // открыть файлы
+    
+    std::ifstream orFileName;
+    std::ifstream authFileName;
+    
     orFileName.open(a.getOriginal());
-    if (!orFileName) {
+    
+    if (!orFileName) 
+    {
         cerr<<"No open original file\n";
         exit(1);
     }
+
     orFileName >> amount;
-    for(int i=0; i<amount; ++i) {
-        VectData tmp{0, nullptr};
-        orFileName >> tmp.VecSize;
-        tmp.vec = new vector<uint64_t>(tmp.VecSize);
-        for(int g=0; g<tmp.VecSize; ++g) {
-            if (orFileName.eof()) {
-                cerr<<"No open file\n";
+
+    for(int i = 0; i < amount; ++i)
+    {
+        size_t VecSize;
+        orFileName >> VecSize;
+        all_data.push_back(std::vector<uint64_t>(VecSize));
+        for(size_t g = 0; g < VecSize; ++g) 
+        {
+            if (orFileName.eof())
+            {
+                cerr << "There is no data in origin file\n";
                 exit(1);
             }
-            orFileName >> tmp.vec->at(g);
+            orFileName >> all_data[all_data.size() - 1]->at(g);
         }
-        all_data.push_back(tmp);
     }
     orFileName.close();
 
     resFileName.open(a.getResult());
    
-    resFileName<<amount;
+    resFileName << amount;
     
     authFileName.open(a.getAuth());
-    if (!authFileName) {
+     
+    if (!authFileName) 
+    {
         cerr<<"No open auth file\n";
         exit(1);
     }
-    authFileName>> login >> pswd;  
-    authFileName.close();   
+
+    authFileName >> login >> pswd;
+    authFileName.close();    
 }
 
-Filer::~Filer() {
+Filer::~Filer() 
+{
     resFileName.close();
 }

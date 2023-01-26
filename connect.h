@@ -27,23 +27,21 @@ using namespace CryptoPP;
 
 class Web
 {
-private:
-    sockaddr_in * caddr;///<Cтруктура с адресом программы клиента
-    sockaddr_in * saddr;///<Cтруктура с адресом программы сервера
-    int Socket; ///< Основной сокет
-    string login;///< Логин для авторизации
-    string pswd;///< Пароль для авторизации
-    string msg;///< Сообщение для отправки данных 
-    string hash;///< Данные для шифрованич
-    string Hash;///< Зашифрованный пароль
 public:
-    Web()=delete;///<запрет конструктора без параметров
-    Web(const console & a,const Filer& op);
+    Web(const Console & a, const Filer& op);
     ~Web();//<дecтруктор
     void Connect();///<Установка соединения между клиентом и сервером
     void Auth();///<Авторизация клиента на сервере
 
+    /// Не используются!
     int Receiving(int Socket);
-
     void Sending(int Socket, char* buf, size_t size);
+    void Install();
+
+private:
+    sockaddr_in * caddr;///<Cтруктура с адресом программы клиента
+    sockaddr_in * saddr;///<Cтруктура с адресом программы сервера
+    int socket_; ///< Основной сокет
+    std::string login;///< Логин для авторизации
+    std::string pswd;///< Пароль для авторизации
 };
